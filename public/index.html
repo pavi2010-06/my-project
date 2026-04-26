@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>V-Connect Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    /* CSS Variables */
+    :root {
+      --bg-color: #0B0F1A;
+      --card-bg: #121826;
+      --accent-color: #00E5FF;
+      --secondary-color: #7C4DFF;
+      --text-main: #ffffff;
+      --text-muted: #a0aec0;
+      --font-heading: 'Rajdhani', sans-serif;
+      --font-data: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-data);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4, h5, h6, .heading {
+      font-family: var(--font-heading);
+    }
+
+    /* Glassmorphism Cards */
+    .glass-card {
+      background: rgba(18, 24, 38, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 24px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .glass-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 32px rgba(0, 229, 255, 0.1);
+    }
+
+    /* Neon Buttons */
+    .neon-btn {
+      background: transparent;
+      color: var(--accent-color);
+      border: 1px solid var(--accent-color);
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .neon-btn:hover {
+      background: var(--accent-color);
+      color: var(--bg-color);
+      box-shadow: 0 0 15px var(--accent-color), 0 0 30px var(--accent-color);
+    }
+
+    .neon-btn-secondary {
+      color: var(--secondary-color);
+      border-color: var(--secondary-color);
+      background: transparent;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+    }
+    
+    .neon-btn-secondary:hover {
+      background: var(--secondary-color);
+      color: #fff;
+      box-shadow: 0 0 15px var(--secondary-color), 0 0 30px var(--secondary-color);
+    }
+
+    /* Layout Utilities */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .grid { display: grid; }
+    .grid-cols-3 { grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .grid-cols-2 { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+    @media (max-width: 768px) {
+      .grid-cols-3, .grid-cols-2 { grid-template-columns: 1fr; }
+    }
+
+    /* Inputs */
+    .input-field {
+      width: 100%;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #fff;
+      padding: 12px;
+      border-radius: 8px;
+      font-family: var(--font-data);
+      margin-bottom: 16px;
+      transition: border-color 0.3s ease;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 8px rgba(0,229,255,0.3);
+    }
+
+    /* Gradient Text */
+    .gradient-text {
+      background: linear-gradient(90deg, var(--accent-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Skeleton Loading */
+    .skeleton {
+      background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+      border-radius: 16px;
+    }
+
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Navbar */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 0;
+      margin-bottom: 40px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    /* Modal / Match Results */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(11, 15, 26, 0.8);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      animation: fadeIn 0.3s forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-color), var(--secondary-color));
+      box-shadow: 0 0 10px var(--accent-color);
+      transition: width 1s ease-out;
+    }
+
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Component: Login
+    const Login = ({ setAuth }) => {
+      const [email, setEmail] = useState('admin@vconnect.com');
+      const [password, setPassword] = useState('password123'); // prefilled for demo
+      const [role, setRole] = useState('Admin'); 
+      const [error, setError] = useState('');
+      
+      const handleLogin = async (e) => {
+        e.preventDefault();
+        try {
+          const res = await fetch('http://localhost:5000/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            localStorage.setItem('token', data.token);
+            setAuth({ token: data.token, user: data.user });
+          } else {
+            setError(data.msg || 'Login failed');
+          }
+        } catch (err) {
+          setError('Network error. Is the backend running?');
+        }
+      };
+
+      return (
+        <div style={{ height: '100vh', display: 'flex', flexDirection: window.innerWidth < 768 ? 'column' : 'row' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '10%', background: 'radial-gradient(circle at top left, rgba(0,229,255,0.1), transparent 50%)' }}>
+            <h1 className="heading gradient-text" style={{ fontSize: '4rem', marginBottom: '20px' }}>V-Connect</h1>
+            <p style={{ fontSize: '1.5rem', color: 'var(--text-muted)' }}>Empowering Communities with Smart Allocation</p>
+          </div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(18,24,38,0.5)' }}>
+            <div className="glass-card" style={{ width: '100%', maxWidth: '400px' }}>
+              <h2 className="heading" style={{ fontSize: '2rem', marginBottom: '24px', textAlign: 'center' }}>Welcome Back</h2>
+              {error && <p style={{ color: '#ff4d4d', marginBottom: '16px', textAlign: 'center' }}>{error}</p>}
+              
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
+                <button 
+                  style={{ flex: 1, padding: '10px', background: role === 'Admin' ? 'var(--accent-color)' : 'transparent', color: role === 'Admin' ? '#000' : '#fff', border: '1px solid var(--accent-color)', borderRadius: '4px', cursor: 'pointer', fontFamily: 'var(--font-heading)' }}
+                  onClick={() => { setRole('Admin'); setEmail('admin@vconnect.com'); }}
+                >
+                  Admin
+                </button>
+                <button 
+                  style={{ flex: 1, padding: '10px', background: role === 'Volunteer' ? 'var(--secondary-color)' : 'transparent', color: role === 'Volunteer' ? '#fff' : '#fff', border: '1px solid var(--secondary-color)', borderRadius: '4px', cursor: 'pointer', fontFamily: 'var(--font-heading)' }}
+                  onClick={() => { setRole('Volunteer'); setEmail('john@example.com'); }}
+                >
+                  Volunteer
+                </button>
+              </div>
+
+              <form onSubmit={handleLogin}>
+                <input className="input-field" type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
+                <input className="input-field" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
+                <button type="submit" className="neon-btn" style={{ width: '100%', marginTop: '16px' }}>Sign In</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // Component: Dashboard
+    const Dashboard = ({ token, onMatchResults }) => {
+      const [stats, setStats] = useState(null);
+      const [loading, setLoading] = useState(true);
+
+      const fetchStats = async () => {
+        try {
+          const res = await fetch('http://localhost:5000/api/dashboard-stats', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          setStats(data);
+          setLoading(false);
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      useEffect(() => {
+        fetchStats();
+      }, []);
+
+      const handleAutoAllocate = async () => {
+        try {
+          const res = await fetch('http://localhost:5000/api/match/auto-allocate', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          onMatchResults(data.allocations || []);
+          fetchStats(); // Refresh stats after allocation
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      if (loading) return (
+        <div className="grid grid-cols-3">
+          <div className="skeleton" style={{height: '150px'}}></div>
+          <div className="skeleton" style={{height: '150px'}}></div>
+          <div className="skeleton" style={{height: '150px'}}></div>
+        </div>
+      );
+
+      return (
+        <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+            <h2 className="heading" style={{ fontSize: '2.5rem' }}>Overview</h2>
+            <button className="neon-btn" onClick={handleAutoAllocate}>
+              🔥 Auto Allocate
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3" style={{ marginBottom: '32px' }}>
+            <div className="glass-card">
+              <h3 className="heading" style={{ color: 'var(--text-muted)', fontSize: '1.2rem', textTransform: 'uppercase' }}>Total Requests</h3>
+              <p style={{ fontSize: '3rem', fontWeight: 'bold', color: 'var(--accent-color)' }}>{stats.totalRequests || 0}</p>
+            </div>
+            <div className="glass-card">
+              <h3 className="heading" style={{ color: 'var(--text-muted)', fontSize: '1.2rem', textTransform: 'uppercase' }}>Active Volunteers</h3>
+              <p style={{ fontSize: '3rem', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{stats.activeVolunteers || 0}</p>
+            </div>
+            <div className="glass-card">
+              <h3 className="heading" style={{ color: 'var(--text-muted)', fontSize: '1.2rem', textTransform: 'uppercase' }}>Urgent Needs</h3>
+              <p style={{ fontSize: '3rem', fontWeight: 'bold', color: '#ff4d4d' }}>{stats.urgentNeeds || 0}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2">
+            <div className="glass-card">
+              <h3 className="heading" style={{ fontSize: '1.5rem', marginBottom: '16px', color: 'var(--accent-color)' }}>Needs by Category</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {stats.needsByCategory && Object.keys(stats.needsByCategory).length > 0 ? Object.keys(stats.needsByCategory).map(key => (
+                  <div key={key} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                    <span style={{ fontSize: '1.1rem' }}>{key}</span>
+                    <span style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}>{stats.needsByCategory[key]}</span>
+                  </div>
+                )) : <p style={{ color: 'var(--text-muted)' }}>No data available</p>}
+              </div>
+            </div>
+
+            <div className="glass-card">
+              <h3 className="heading" style={{ fontSize: '1.5rem', marginBottom: '16px', color: 'var(--secondary-color)' }}>Live Allocations</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {stats.liveAllocations && stats.liveAllocations.length > 0 ? stats.liveAllocations.map((alloc, idx) => (
+                  <div key={idx} style={{ background: 'rgba(0,0,0,0.3)', padding: '16px', borderRadius: '8px', borderLeft: '4px solid var(--secondary-color)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <strong style={{ color: 'var(--accent-color)', fontFamily: 'var(--font-heading)', fontSize: '1.2rem' }}>{alloc.needId?.issueType} - {alloc.needId?.location}</strong>
+                      <span style={{ color: 'var(--secondary-color)', fontSize: '0.9rem', fontWeight: 'bold' }}>Score: {alloc.matchScore.toFixed(0)}</span>
+                    </div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Assigned to: <span style={{ color: '#fff' }}>{alloc.volunteerId?.name}</span></div>
+                  </div>
+                )) : <p style={{ color: 'var(--text-muted)' }}>No allocations yet. Run Auto Allocate!</p>}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // Component: Match Results Modal
+    const MatchResults = ({ results, onClose }) => {
+      // Simulate loading state for effect
+      const [progress, setProgress] = useState(0);
+      
+      useEffect(() => {
+        setTimeout(() => setProgress(100), 100);
+      }, []);
+
+      return (
+        <div className="modal-overlay">
+          <div className="glass-card" style={{ width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto' }}>
+            <h2 className="heading gradient-text" style={{ fontSize: '2rem', marginBottom: '24px', textAlign: 'center' }}>Allocation Results</h2>
+            
+            {results.length === 0 ? (
+              <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '24px' }}>No new matches could be made at this time.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px' }}>
+                {results.map((alloc, idx) => (
+                  <div key={idx} style={{ background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <span style={{ fontFamily: 'var(--font-heading)', fontSize: '1.1rem' }}><strong>Task ID:</strong> {alloc.needId.substring(alloc.needId.length - 6)}</span>
+                      <span style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}>{alloc.matchScore.toFixed(1)}% Match</span>
+                    </div>
+                    <div className="progress-bar">
+                      <div className="progress-fill" style={{ width: `${progress === 100 ? alloc.matchScore : 0}%` }}></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div style={{ textAlign: 'center' }}>
+              <button className="neon-btn" onClick={onClose}>Close</button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // Component: Add Need
+    const AddNeed = ({ token }) => {
+      const [formData, setFormData] = useState({
+        issueType: '', location: '', urgencyLevel: 3, peopleAffected: '', requiredSkills: '', requiredHoursStart: 9, requiredHoursEnd: 17, deadline: ''
+      });
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+          const payload = { ...formData, requiredSkills: formData.requiredSkills.split(',').map(s => s.trim()), deadline: new Date(formData.deadline) };
+          const res = await fetch('http://localhost:5000/api/needs/add-need', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            alert('Need added successfully!');
+            setFormData({ issueType: '', location: '', urgencyLevel: 3, peopleAffected: '', requiredSkills: '', requiredHoursStart: 9, requiredHoursEnd: 17, deadline: '' });
+          } else {
+            alert('Failed to add need');
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      return (
+        <div className="glass-card" style={{ maxWidth: '600px', margin: '0 auto', animation: 'fadeIn 0.5s ease-out' }}>
+          <h2 className="heading gradient-text" style={{ fontSize: '2rem', marginBottom: '24px' }}>Register New Need</h2>
+          <form onSubmit={handleSubmit}>
+            <label style={{ display: 'block', marginBottom: '8px', color: 'var(--accent-color)' }}>Issue Type</label>
+            <input className="input-field" placeholder="e.g. Health, Disaster, Food" value={formData.issueType} onChange={e => setFormData({...formData, issueType: e.target.value})} required />
+            
+            <label style={{ display: 'block', marginBottom: '8px', color: 'var(--accent-color)' }}>Location</label>
+            <input className="input-field" placeholder="e.g. New York" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} required />
+            
+            <div style={{ marginBottom: '20px', background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <label style={{ display: 'block', marginBottom: '12px', color: 'var(--text-muted)' }}>Urgency Level: <span style={{color: 'var(--secondary-color)', fontWeight: 'bold'}}>{formData.urgencyLevel}</span></label>
+              <input type="range" min="1" max="5" style={{ width: '100%', accentColor: 'var(--secondary-color)' }} value={formData.urgencyLevel} onChange={e => setFormData({...formData, urgencyLevel: parseInt(e.target.value)})} />
+            </div>
+
+            <label style={{ display: 'block', marginBottom: '8px', color: 'var(--accent-color)' }}>People Affected</label>
+            <input className="input-field" type="number" placeholder="Number" value={formData.peopleAffected} onChange={e => setFormData({...formData, peopleAffected: parseInt(e.target.value)})} required />
+            
+            <label style={{ display: 'block', marginBottom: '8px', color: 'var(--accent-color)' }}>Required Skills (comma separated)</label>
+            <input className="input-field" placeholder="e.g. First Aid, Logistics" value={formData.requiredSkills} onChange={e => setFormData({...formData, requiredSkills: e.target.value})} required />
+            
+            <div style={{ display: 'flex', gap: '16px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--accent-color)' }}>Start Hour (0-23)</label>
+                <input className="input-field" type="number" min="0" max="23" value={formData.requiredHoursStart} onChange={e => setFormData({...formData, requiredHoursStart: parseInt(e.target.value)})} required />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--accent-color)' }}>End Hour (0-23)</label>
+                <input className="input-field" type="number" min="0" max="23" value={formData.requiredHoursEnd} onChange={e => setFormData({...formData, requiredHoursEnd: parseInt(e.target.value)})} required />
+              </div>
+            </div>
+
+            <label style={{ display: 'block', marginBottom: '8px', color: 'var(--accent-color)' }}>Deadline</label>
+            <input className="input-field" type="date" value={formData.deadline} onChange={e => setFormData({...formData, deadline: e.target.value})} required />
+            
+            <button type="submit" className="neon-btn" style={{ width: '100%', marginTop: '10px' }}>Submit Request</button>
+          </form>
+        </div>
+      );
+    };
+
+    // Component: Volunteer
+    const Volunteer = ({ token }) => {
+      const [formData, setFormData] = useState({
+        name: '', preferredLocation: '', skills: '', availableHoursStart: 8, availableHoursEnd: 18
+      });
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+          const payload = { ...formData, skills: formData.skills.split(',').map(s => s.trim()) };
+          const res = await fetch('http://localhost:5000/api/volunteers/register-volunteer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          if(res.ok) alert('Volunteer profile created successfully!');
+          else alert(data.msg || 'Error creating profile');
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      return (
+        <div className="glass-card" style={{ maxWidth: '600px', margin: '0 auto', animation: 'fadeIn 0.5s ease-out' }}>
+          <h2 className="heading gradient-text" style={{ fontSize: '2rem', marginBottom: '24px' }}>Complete Volunteer Profile</h2>
+          <form onSubmit={handleSubmit}>
+            <label style={{ display: 'block', marginBottom: '8px', color: 'var(--secondary-color)' }}>Full Name</label>
+            <input className="input-field" placeholder="John Doe" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+            
+            <label style={{ display: 'block', marginBottom: '8px', color: 'var(--secondary-color)' }}>Preferred Location</label>
+            <input className="input-field" placeholder="e.g. New York" value={formData.preferredLocation} onChange={e => setFormData({...formData, preferredLocation: e.target.value})} required />
+            
+            <label style={{ display: 'block', marginBottom: '8px', color: 'var(--secondary-color)' }}>Skills (comma separated tags)</label>
+            <input className="input-field" placeholder="e.g. Cooking, First Aid" value={formData.skills} onChange={e => setFormData({...formData, skills: e.target.value})} required />
+            
+            <div style={{ display: 'flex', gap: '16px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--secondary-color)' }}>Available Start Hour</label>
+                <input className="input-field" type="number" min="0" max="23" value={formData.availableHoursStart} onChange={e => setFormData({...formData, availableHoursStart: parseInt(e.target.value)})} required />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--secondary-color)' }}>Available End Hour</label>
+                <input className="input-field" type="number" min="0" max="23" value={formData.availableHoursEnd} onChange={e => setFormData({...formData, availableHoursEnd: parseInt(e.target.value)})} required />
+              </div>
+            </div>
+
+            <button type="submit" className="neon-btn-secondary" style={{ width: '100%', marginTop: '10px' }}>Register Profile</button>
+          </form>
+        </div>
+      );
+    };
+
+    // Main App
+    const App = () => {
+      const [auth, setAuth] = useState(null);
+      const [currentPage, setCurrentPage] = useState('dashboard');
+      const [matchResults, setMatchResults] = useState(null);
+
+      useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+          // Simplistic token recovery
+          setAuth({ token, user: { name: 'User' } });
+        }
+      }, []);
+
+      const logout = () => {
+        localStorage.removeItem('token');
+        setAuth(null);
+      };
+
+      if (!auth) {
+        return <Login setAuth={setAuth} />;
+      }
+
+      return (
+        <div className="container">
+          {matchResults && <MatchResults results={matchResults} onClose={() => setMatchResults(null)} />}
+          
+          <nav className="navbar">
+            <h1 className="heading gradient-text" style={{ fontSize: '2rem', cursor: 'pointer', margin: 0 }} onClick={() => setCurrentPage('dashboard')}>V-Connect</h1>
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+              <span style={{ cursor: 'pointer', color: currentPage === 'dashboard' ? 'var(--accent-color)' : '#fff', fontWeight: currentPage === 'dashboard' ? 'bold' : 'normal', transition: 'color 0.3s' }} onClick={() => setCurrentPage('dashboard')}>Dashboard</span>
+              <span style={{ cursor: 'pointer', color: currentPage === 'addNeed' ? 'var(--accent-color)' : '#fff', fontWeight: currentPage === 'addNeed' ? 'bold' : 'normal', transition: 'color 0.3s' }} onClick={() => setCurrentPage('addNeed')}>Add Need</span>
+              <span style={{ cursor: 'pointer', color: currentPage === 'volunteer' ? 'var(--accent-color)' : '#fff', fontWeight: currentPage === 'volunteer' ? 'bold' : 'normal', transition: 'color 0.3s' }} onClick={() => setCurrentPage('volunteer')}>Volunteer Profile</span>
+              <button className="neon-btn-secondary" style={{ padding: '8px 16px', fontSize: '0.9rem', marginLeft: '16px' }} onClick={logout}>Logout</button>
+            </div>
+          </nav>
+
+          <main>
+            {currentPage === 'dashboard' && <Dashboard token={auth.token} onMatchResults={setMatchResults} />}
+            {currentPage === 'addNeed' && <AddNeed token={auth.token} />}
+            {currentPage === 'volunteer' && <Volunteer token={auth.token} />}
+          </main>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
